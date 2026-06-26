@@ -6,12 +6,10 @@ export interface FSFile {
 }
 
 export function useFileSystem(
-  content: string,
-  onContentChange: (content: string) => void,
+  openFileAsTab: (name: string, content: string, handle: FileSystemFileHandle) => void,
 ) {
   const [dirHandle, setDirHandle] = useState<FileSystemDirectoryHandle | null>(null)
   const [files, setFiles] = useState<FSFile[]>([])
-  const [activeFile, setActiveFile] = useState<string | null>(null)
 
   const refreshFiles = useCallback(async (dir: FileSystemDirectoryHandle) => {
     const entries: FSFile[] = []
@@ -28,34 +26,26 @@ export function useFileSystem(
     try {
       const dir = await window.showDirectoryPicker({ mode: 'readwrite' })
       setDirHandle(dir)
-      setActiveFile(null)
       await refreshFiles(dir)
     } catch (e) {
-      if (e instanceof Error && e.name !== 'AbortError') {
-        console.error('openFolder failed:', e)
-      }
+      if (e instanceof Error && e.name !== 'AbortError') console.error('openFolder failed:', e)
     }
   }, [refreshFiles])
 
   const openFileFromSidebar = useCallback(async (file: FSFile) => {
     const f = await file.handle.getFile()
     const text = await f.text()
-    onContentChange(text)
-    setActiveFile(file.name)
-  }, [onContentChange])
+    openFileAsTab(file.name, text, file.handle)
+  }, [openFileAsTab])
 
-  const saveActiveFile = useCallback(async (): Promise<boolean> => {
-    if (!dirHandle || !activeFile) return false
+  const saveToHandle = useCallback(async (handle: FileSystemFileHandle, content: string): Promise<boolean> => {
     try {
-      const fileHandle = await dirHandle.getFileHandle(activeFile)
-      const writable = await fileHandle.createWritable()
+      const writable = await handle.createWritable()
       await writable.write(content)
       await writable.close()
       return true
-    } catch {
-      return false
-    }
-  }, [dirHandle, activeFile, content])
+    } catch { return false }
+  }, [])
 
   const createFile = useCallback(async (name: string) => {
     if (!dirHandle) return
@@ -65,36 +55,18 @@ export function useFileSystem(
       const writable = await fileHandle.createWritable()
       await writable.write('')
       await writable.close()
-      onContentChange('')
-      setActiveFile(fileName)
+      openFileAsTab(fileName, '', fileHandle)
       await refreshFiles(dirHandle)
-    } catch (e) {
-      console.error('Failed to create file:', e)
-    }
-  }, [dirHandle, onContentChange, refreshFiles])
+    } catch (e) { console.error('Failed to create file:', e) }
+  }, [dirHandle, openFileAsTab, refreshFiles])
 
   const deleteFile = useCallback(async (name: string) => {
     if (!dirHandle) return
     try {
       await dirHandle.removeEntry(name)
-      if (activeFile === name) {
-        setActiveFile(null)
-        onContentChange('')
-      }
       await refreshFiles(dirHandle)
-    } catch (e) {
-      console.error('Failed to delete file:', e)
-    }
-  }, [dirHandle, activeFile, onContentChange, refreshFiles])
+    } catch (e) { console.error('Failed to delete file:', e) }
+  }, [dirHandle, refreshFiles])
 
-  return {
-    dirHandle,
-    files,
-    activeFile,
-    openFolder,
-    openFileFromSidebar,
-    saveActiveFile,
-    createFile,
-    deleteFile,
-  }
+  return { dirHandle, files, openFolder, openFileFromSidebar, saveToHandle, createFile, deleteFile }
 }

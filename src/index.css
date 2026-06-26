@@ -3,6 +3,7 @@
 @plugin "@tailwindcss/typography";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "highlight.js/styles/github-dark.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -132,4 +133,50 @@
   html {
     @apply font-sans;
     }
+}
+
+/* highlight.js: light mode override */
+:root:not(.dark) .hljs {
+  background: oklch(0.97 0 0);
+  color: oklch(0.22 0.01 265);
+}
+
+/* Nested decimal ordered lists: 1. → 1.1. → 1.1.1. */
+.prose ol {
+  list-style: none !important;
+  counter-reset: ol-counter;
+}
+.prose ol > li {
+  counter-increment: ol-counter;
+}
+.prose ol > li::before {
+  content: counters(ol-counter, ".") ". ";
+  font-weight: 500;
+  margin-right: 0.25em;
+}
+
+/* Prose code block: remove Tailwind Typography default bg conflict */
+.prose pre {
+  padding: 0;
+  background: transparent;
+}
+.prose pre code.hljs {
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+@media print {
+  [data-no-print] { display: none !important; }
+
+  body { background: white !important; color: black !important; }
+
+  [data-print-expand] {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .prose { max-width: none !important; }
 }

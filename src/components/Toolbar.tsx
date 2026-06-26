@@ -1,4 +1,4 @@
-import { File, FolderOpen, Moon, Save, Sun } from 'lucide-react'
+import { File, FolderOpen, Moon, Printer, Save, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -13,6 +13,7 @@ interface ToolbarProps {
   onOpenFolder: () => void
   onOpenFile: () => void
   onSave: () => void
+  onPrint: () => void
   onToggleTheme: () => void
 }
 
@@ -44,10 +45,11 @@ export function Toolbar({
   onOpenFolder,
   onOpenFile,
   onSave,
+  onPrint,
   onToggleTheme,
 }: ToolbarProps) {
   return (
-    <header className="flex items-center justify-between border-b border-border px-4 py-2">
+    <header data-no-print className="flex items-center justify-between border-b border-border px-4 py-2">
       <div className="flex items-center gap-2">
         <img src="/feathermd.svg" alt="" className="size-6 shrink-0" />
         <span className="select-none font-semibold tracking-tight text-foreground">
@@ -83,6 +85,9 @@ export function Toolbar({
           onClick={onSave}
         >
           <Save className="size-4" />
+        </ToolbarButton>
+        <ToolbarButton label="Export PDF" onClick={onPrint}>
+          <Printer className="size-4" />
         </ToolbarButton>
         <ToolbarButton
           label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
